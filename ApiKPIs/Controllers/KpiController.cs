@@ -20,6 +20,10 @@ namespace ApiKPIs.Controllers
         [HttpPost("v1/InserirKPI")]
         public IActionResult InserirKPI(Entidades.Kpi kpi)
         {
+            if (_sql.VerificarExistenciaKPI(kpi.Nome))
+            {
+                return StatusCode(400, "Já existe uma KPI cadastrada com esse nome!");
+            }
 
             if (!Utils.Validacao.IsNome(kpi.Nome))
             {
@@ -76,11 +80,11 @@ namespace ApiKPIs.Controllers
             return StatusCode(200, "KPI atualizada com sucesso!");
         }
         [HttpDelete("v1/DeletarKPI")]
-        public IActionResult DeletarKPI(string nome)
+        public IActionResult DeletarKPI(int id)
         {
             try
             {
-                _sql.DeletarKPI(nome);
+                _sql.DeletarKPI(id);
             }
 
 
@@ -91,19 +95,20 @@ namespace ApiKPIs.Controllers
 
             catch (System.Data.SqlClient.SqlException)
             {
-                return StatusCode(400, "Insira o nome da KPI!");
+                return StatusCode(400, "Insira o ID da KPI!");
             }
 
 
             return StatusCode(200, "KPI deletada com sucesso!");
         }
+
         [HttpGet("v1/SelecionarKPI")]
-        public IActionResult SelecionarKPI(string nome)
+        public IActionResult SelecionarKPI(int id)
         {
             Entidades.Kpi kpi;
             try
             {
-                kpi = _sql.SelecionarKPI(nome);
+                kpi = _sql.SelecionarKPI(id);
             }
 
 
@@ -114,7 +119,7 @@ namespace ApiKPIs.Controllers
 
             catch (System.Data.SqlClient.SqlException)
             {
-                return StatusCode(400, "Insira o nome da KPI!");
+                return StatusCode(400, "Insira o ID da KPI!");
             }
 
             return StatusCode(200, kpi);

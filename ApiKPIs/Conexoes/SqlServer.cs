@@ -54,12 +54,14 @@ namespace ApiKPIs.Conexoes
                 _conexao.Open();
 
                 string query = @"UPDATE KPIS
-                                SET UnidadeMedida = @UnidadeMedida
+                                SET Nome = @Nome
+                                ,UnidadeMedida = @UnidadeMedida
                                 ,Status = @Status
-                                WHERE Nome = @Nome";
+                                WHERE ID = @ID";
 
                 using (var cmd = new SqlCommand(query, _conexao))
                 {
+                    cmd.Parameters.AddWithValue("@ID", kpi.Id);
                     cmd.Parameters.AddWithValue("@Nome", kpi.Nome);
                     cmd.Parameters.AddWithValue("@UnidadeMedida", kpi.UnidadeMedida);
                     cmd.Parameters.AddWithValue("@Status", kpi.Status);
@@ -76,18 +78,18 @@ namespace ApiKPIs.Conexoes
                 _conexao.Close();
             }
         }
-        public void DeletarKPI(string nome)
+        public void DeletarKPI(int id)
         {
             try
             {
                 _conexao.Open();
 
                 string query = @"DELETE FROM KPIS
-                                WHERE Nome = @Nome";
+                                WHERE ID = @ID";
 
                 using (var cmd = new SqlCommand(query, _conexao))
                 {
-                    cmd.Parameters.AddWithValue("@Nome", nome);
+                    cmd.Parameters.AddWithValue("@ID", id);
                     if (cmd.ExecuteNonQuery() == 0)
                     {
                         throw new InvalidOperationException("KPI não encontrada!");
@@ -100,24 +102,25 @@ namespace ApiKPIs.Conexoes
                 _conexao.Close();
             }
         }
-        public Entidades.Kpi SelecionarKPI(string nome)
+        public Entidades.Kpi SelecionarKPI(int id)
         {
             try
             {
                 _conexao.Open();
 
                 string query = @"SELECT * FROM KPIS
-                                WHERE Nome = @Nome";
+                                WHERE ID = @ID";
 
                 using (var cmd = new SqlCommand(query, _conexao))
                 {
-                    cmd.Parameters.AddWithValue("@Nome", nome);
+                    cmd.Parameters.AddWithValue("@ID", id);
                     var rdr = cmd.ExecuteReader();
 
                     if (rdr.Read())
                     {
                         var kpi = new Entidades.Kpi();
-                        kpi.Nome = nome;
+                        kpi.Id = id;
+                        kpi.Nome = rdr["Nome"].ToString();
                         kpi.UnidadeMedida = rdr["UnidadeMedida"].ToString();
                         kpi.Status = Convert.ToBoolean(rdr["Status"].ToString());
 
@@ -125,7 +128,7 @@ namespace ApiKPIs.Conexoes
                     }
                     else
                     {
-                        throw new InvalidOperationException("KPI " + nome + " não encontrada!");
+                        throw new InvalidOperationException("KPI " + id + " não encontrada!");
                     }
                 }
 
@@ -149,6 +152,7 @@ namespace ApiKPIs.Conexoes
                     while (rdr.Read())
                     {
                         var kpi = new Entidades.Kpi();
+                        kpi.Id = Convert.ToInt32(rdr["Id"].ToString());
                         kpi.Nome = rdr["Nome"].ToString();
                         kpi.UnidadeMedida = rdr["UnidadeMedida"].ToString();
                         kpi.Status = Convert.ToBoolean(rdr["Status"].ToString());
@@ -161,6 +165,28 @@ namespace ApiKPIs.Conexoes
 
             finally { _conexao.Close(); }
             return kpis;
+        }
+
+        public bool VerificarExistenciaKPI(string nome)
+        {
+            try
+            {
+                _conexao.Open();
+
+                string query = @"select Count(ID) AS total 
+                                 from KPIS WHERE Nome = @Nome;";
+
+                using (var cmd = new SqlCommand(query, _conexao))
+                {
+                    cmd.Parameters.AddWithValue("@Nome", nome);
+
+                    return Convert.ToBoolean(cmd.ExecuteScalar());
+                }
+            }
+            finally
+            {
+                _conexao.Close();
+            }
         }
 
         // -------------------------- QUERYS DADOS KPI-----------------------------------------
